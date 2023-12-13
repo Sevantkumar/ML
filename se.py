@@ -1,56 +1,33 @@
-import matplotlib.pyplot as plt
-from sklearn import datasets
-from sklearn.cluster import KMeans
 import pandas as pd
-import numpy as np
-iris=datasets.load_iris()
-
-X=pd.DataFrame(iris.data)
-X.columns=['Sepal_Length','Sepal_Width','Petal_Length','Petal_Width']
-Y=pd.DataFrame(iris.target)
-Y.columns=['Targets']
-
-
-model=KMeans(n_clusters=3,n_init=10)
-model.fit(X)
-
-plt.figure(figsize=(14,14))
-colormap=np.array(['red','lime','black'])
-plt.subplot(2,2,1)
-plt.scatter(X.Petal_Length,X.Petal_Width,c=colormap[Y.Targets],s=40)
-plt.title('Real clusters')
-plt.xlabel('Petal Length')
-plt.ylabel('Petal Width')
-
-
-plt.subplot(2,2,2)
-plt.scatter(X.Petal_Length,X.Petal_Width,c=colormap[model.labels_],s=40)
-plt.title("K-means clustering")
-plt.xlabel('Petal Length')
-plt.ylabel('Petal Width')
-
-
-
-
-#general EM for GMM
-from sklearn import preprocessing
-scaler=preprocessing.StandardScaler()
-scaler.fit(X)
-xsa=scaler.transform(X)
-xs=pd.DataFrame(xsa,columns=X.columns)
-
-
-from sklearn.mixture import  GaussianMixture
-plt.figure(figsize=(14,14))
-colormap=np.array(['red','lime','black'])
-gmm=GaussianMixture(n_components=3)
-gmm.fit(xs)
-gmm_y=gmm.predict(xs)
-plt.subplot(2,2,3)
-plt.scatter(X.Petal_Length,X.Petal_Width,c=colormap[gmm_y],s=40)
-
-plt.title('GMM clustering')
-plt.xlabel('Petal Length')
-plt.ylabel('Petal Width')
-plt.show()
-print("Observation: The GMM using EM algorithm based clusters matched the tree labels more closely than the k-means")
+data=pd.read_csv('heartdisease.csv')
+heart_disease=pd.DataFrame(data)
+print(heart_disease)
+from pgmpy.models import BayesianNetwork
+model= BayesianNetwork ([
+('age','Lifestyle'),
+('Gender','Lifestyle'),
+('Family','heartdisease'),
+('diet','cholestrol'),
+('Lifestyle','diet'),
+('cholestrol','heartdisease')
+])
+from pgmpy.estimators import MaximumLikelihoodEstimator
+model.fit(heart_disease,estimator = MaximumLikelihoodEstimator)
+from pgmpy.inference import VariableElimination
+HeartDisease_infer = VariableElimination(model)
+print('For age Enter { SuperSeniorCitizen:0, SeniorCitizen:1, MiddleAged:2, Youth:3, Teen:4 
+}')
+print('For Gender Enter { Male:0, Female:1 }')
+print('For Family History Enter { yes:1, No:0 }')
+print('For diet Enter { High:0, Medium:1 }')
+print('For lifeStyle Enter { Athlete:0, Active:1, Moderate:2, Sedentary:3 }')
+print('For cholesterol Enter { High:0, BorderLine:1, Normal:2 }')
+q = HeartDisease_infer.query(variables=['heartdisease'], evidence={
+'age':int(input('Enter age :')),
+ 'Gender':int(input('Enter Gender :')),
+ 'Family':int(input('Enter Family history :')),
+ 'diet':int(input('Enter diet :')),
+ 'Lifestyle':int(input('Enter Lifestyle :')),
+ 'cholestrol':int(input('Enter cholestrol :'))
+ })
+print(q)
